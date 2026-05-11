@@ -1,6 +1,9 @@
 # Overview
+
 The rebuilder deployment makes it possible to automatically update your images once a base image is updated. This can be very convenient to mitigate against vulnerabilities. There are a number of images on hub.docker.com that get regular updates without getting a new tag. With the rebuilder deployment you create a manifest that models the dependency and specifies how the rebuild should be done. The rebuilder deployment does this by checking the created date of the base and derived images.
+
 # Installation
+
 Get the helm chart from [github](https://github.com/gounix/docker-hits/tree/main/helm-charts)
 There following paramers should be changed in the provided values.yaml:
 
@@ -34,6 +37,7 @@ rebuilds                                                               gounix.nl
 ```
 
 # Extending deployments
+
 When the basic installation is performed, we can continue to model all images. This can be done by adding a rebuild.yaml to an existing deployment. The basic rebuild.yaml looks as follows:
 ```
 apiVersion: gounix.nl/v1
@@ -68,7 +72,9 @@ In this example spec.base specifies the base image. Our custom image is built on
 The spec.registry section specifies where our derived image is stored, in this case kube-sec-board:1.0 on our private registry that uses no authentication. 
 The spec.git section specifies how the derived image can be build. In this case it will git clone git@git.int.gounix.nl:images/kube-sec-board.git and it expects a Makefile in the "." directory.
 The spec.actions section specifies post build actions that should be performed, for example restarting a deployment. The objecttypes that can be specified are deployment, daemonset, statefulset and replicaset.
+
 # Example Makefile
+
 A simple Makefile to rebuild an image can be as simple as the next example:
 ```
 REGISTRY=registry-tst.int.gounix.nl
@@ -79,20 +85,27 @@ target:
         buildah build -t ${IMAGE}:${IMAGE_VERSION} .
         buildah push ${IMAGE}:${IMAGE_VERSION} docker://${REGISTRY}/${IMAGE}:${IMAGE_VERSION}
 ```
+
 # Adding secrets
+
 The secret that is used in the spec.git section of the rebuild.yaml can be created in the following way:
 ```
 kubectl create secret -n rebuilder generic ssh-key   --from-file=./id_rsa
 ```
 This secret should be created in the rebuilder namespace. You can also use your favourite way(like vault for example) to create secrets in a secure way.
+
 # Notes about pullPolicy
+
 The rebuilder deployment does not change version numbers, it just rebuild existing images. To make sure kubernetes will pull the new image the pullPolicy should be set to Always on all deployments that use rebuild.
+
 # Builder image
-The builder image contains the following software
+
+The builder image contains the following software:
 - a ssh client to fetch git repos
 - ca-certificates to trust registry certificates
 - make to build images from a Makefile
 - buildah for the actual building
 - wget and curl to fetch other dependencies
+
 If you need other software you can derive a custom image from the builder image and add additional software.
 
