@@ -112,6 +112,3 @@ The builder image contains the following software:
 
 If you need other software you can derive a custom image from the builder image and add additional software.
 
-# Additional options
-
-repo pull
