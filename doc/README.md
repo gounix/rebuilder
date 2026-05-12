@@ -68,10 +68,13 @@ spec:
     - objecttype: deployment
       name: kube-sec-board
 ```
-In this example spec.base specifies the base image. Our custom image is built on-top of docker.io/library/python:3.14.2-slim. The spec.base.type and spec.registry.type fields can contain dockerHub, ghcr or dockerRegistry. In which dockerRegistry can be used for any registry that uses the docker registry v2 api (Quay.io for example).
-The spec.registry section specifies where our derived image is stored, in this case kube-sec-board:1.0 on our private registry that uses no authentication. 
-The spec.git section specifies how the derived image can be build. In this case it will git clone git@git.int.gounix.nl:images/kube-sec-board.git and it expects a Makefile in the "." directory.
-The spec.actions section specifies post build actions that should be performed, for example restarting a deployment. The objecttypes that can be specified are deployment, daemonset, statefulset and replicaset.
+In this example spec.base specifies the base image. Our custom image is built on-top of docker.io/library/python:3.14.2-slim. The spec.base.type and spec.registry.type fields can contain "dockerHub", "ghcr" or "dockerRegistry". In which dockerRegistry can be used for any registry that uses the docker registry v2 api (Quay.io for example).  
+
+The spec.registry section specifies where our derived image is stored, in this case kube-sec-board:1.0 on our private registry that uses no authentication.   
+
+The spec.git section specifies how the derived image can be build. In this case it will git clone git@git.int.gounix.nl:images/kube-sec-board.git and it expects a Makefile in the "." directory.  
+
+The spec.actions section specifies post build actions that should be performed, for example restarting a deployment. The objecttypes that can be specified are deployment, daemonset, statefulset and replicaset.  
 
 # Example Makefile
 
@@ -109,3 +112,6 @@ The builder image contains the following software:
 
 If you need other software you can derive a custom image from the builder image and add additional software.
 
+# Additional options
+
+repo pull
