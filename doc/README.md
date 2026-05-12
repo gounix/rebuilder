@@ -4,7 +4,7 @@ The rebuilder deployment makes it possible to automatically update your images o
 
 # Installation
 
-Get the helm chart from [github](https://github.com/gounix/docker-hits/tree/main/helm-charts)
+Get the helm chart from [github](https://github.com/gounix/rebuilder/tree/main/helm-charts)
 There following paramers should be changed in the provided values.yaml:
 
 The deployment runs a cronjob, the schedule defines when the job should be run
