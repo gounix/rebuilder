@@ -10,7 +10,6 @@ require (
 	rebuilder/resources v0.0.0-unpublished
 	rebuilder/actions v0.0.0-unpublished
 	rebuilder/environ v0.0.0-unpublished
-	rebuilder/semver v0.0.0-unpublished
 	rebuilder/jsonreq v0.0.0-unpublished
 )
 
@@ -68,5 +67,4 @@ replace rebuilder/logger v0.0.0-unpublished => ../logger
 replace rebuilder/actions v0.0.0-unpublished => ../actions
 replace rebuilder/environ v0.0.0-unpublished => ../environ
 replace rebuilder/ghcr v0.0.0-unpublished => ../ghcr
-replace rebuilder/semver v0.0.0-unpublished => ../semver
 replace rebuilder/jsonreq v0.0.0-unpublished => ../jsonreq
