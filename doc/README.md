@@ -27,7 +27,7 @@ image:
   # This sets the pull policy for images.
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "1.0"
+  tag: "1.1.0"
 ```
 On the first deployment the custom resource definitions will be loaded:
 ```
@@ -84,6 +84,8 @@ REGISTRY=registry-tst.int.gounix.nl
 IMAGE=kube-sec-board
 IMAGE_VERSION=1.0
 
+.PHONY: target
+
 target:
         buildah build -t ${IMAGE}:${IMAGE_VERSION} .
         buildah push ${IMAGE}:${IMAGE_VERSION} docker://${REGISTRY}/${IMAGE}:${IMAGE_VERSION}
@@ -112,3 +114,7 @@ The builder image contains the following software:
 
 If you need other software you can derive a custom image from the builder image and add additional software.
 
+# Change history
+
+* 1.0 5/12/2026 Initial version.
+* 1.1.0 5/26/2026 rebuilder checks if an image is newer than a running pod ans if so restarts the pod.
