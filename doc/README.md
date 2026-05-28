@@ -55,6 +55,7 @@ spec:
     project: "images/kube-sec-board.git"
     user: "git"
     dir: "."
+    tag: "1.0"
     secretName: "ssh-key"
     sshKeyName: "id_rsa"
   registry:
