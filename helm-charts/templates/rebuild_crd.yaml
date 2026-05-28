@@ -24,7 +24,7 @@ spec:
                 type: object
                 properties:
                   host:
-                    description: repo host, empty for dockerHub and ghcr, thos are fixed
+                    description: repo host, empty for dockerHub and ghcr, those are fixed
                     type: string
                   type:
                     description: type of registry, when in doubt try dockerRegistry
@@ -63,6 +63,9 @@ spec:
                     type: string
                   dir:
                     description: subdirectory of the repo where the code can be found
+                    type: string
+                  tag:
+                    description: tag that should be checked out
                     type: string
                   secretName:
                     description: secret containing he ssh key for connecting to git
