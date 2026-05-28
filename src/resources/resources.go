@@ -60,6 +60,7 @@ type (
 		Project string `json:"project"`
 		User string `json:"user"`
 		Dir string `json:"dir"`
+		Tag string `json:"tag"`
 		SecretName string `json:"secretName"`
 		SshKeyName string `json:"sshKeyName"`
 	}

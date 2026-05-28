@@ -36,7 +36,7 @@ import (
 
 
 func main() {
-	logger.Info("rebuilder.main run started")
+	logger.Info("rebuilder.main run started", "version", "Development-version")
 	if err := environ.Load(); err != nil {
 		logger.Error("rebuilder.main", "environ.Load", err)
 	}

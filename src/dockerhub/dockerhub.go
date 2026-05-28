@@ -60,13 +60,15 @@ type (
 		Annotations AnnotationsT `json:"annotations"`
 	}
 	ManifestsT struct {
+		MediaType string     `json:"mediaType"`
 		Manifest []ManifestT `json:"manifests"`
 	}
 	ConfigT struct {
 		Digest string `json:"digest"`
 	}
 	SingleT struct {
-		Config ConfigT `json:"config"`
+		MediaType string `json:"mediaType"`
+		Config ConfigT   `json:"config"`
 	}
 	BlobT struct {
 		Created time.Time `json:"created"`
@@ -89,39 +91,51 @@ func getToken(repo string) string {
 	return dat.Token
 }
 
-func getDigestFromManifests(token string, repo string, tag string) (string, error) {
+func getDigestFromImageIndex(token string, repo string, tag string) (string, error) {
         var dat ManifestsT
 
         url := fmt.Sprintf(manifestUrlPattern, repo, tag)
-	logger.Info("dockerHub.getDigestFromManifests", "url", url)
+	logger.Info("dockerHub.getDigestFromImageIndex", "url", url)
 
 	if err := jsonreq.GetJsonResp(url, token, "application/vnd.oci.image.index.v1+json", &dat); err != nil {
-                logger.Error("dockerHub.getDigestFromManifests", "err", err)
+                logger.Error("dockerHub.getDigestFromImageIndex", "err", err)
                 return "", err
         }
+	// multi architecture manifest list
+	// "mediaType": "application/vnd.oci.image.index.v1+json"
+	// "mediaType": "application/vnd.docker.distribution.manifest.list.v2+json"
+	if dat.MediaType != "application/vnd.oci.image.index.v1+json" && dat.MediaType != "application/vnd.docker.distribution.manifest.list.v2+json" {
+		logger.Error("dockerHub.getDigestFromImageIndex", "MediaType", dat.MediaType)
+	}
 
 	for _, entry := range dat.Manifest {
 		if entry.Platform.Architecture == "amd64" {
-			logger.Info("dockerHub.getDigestFromManifests returning", "digest", entry.Digest, "arch", entry.Platform.Architecture, "created", entry.Annotations.Created, "url", entry.Annotations.Url, "version", entry.Annotations.Version)
+			logger.Info("dockerHub.getDigestFromImageIndex returning", "digest", entry.Digest, "arch", entry.Platform.Architecture, "created", entry.Annotations.Created, "url", entry.Annotations.Url, "version", entry.Annotations.Version)
 			return entry.Digest, nil
 		}
 	}
-	logger.Error("dockerHub.getDigestFromManifests return not found")
+	logger.Error("dockerHub.getDigestFromImageIndex return not found")
         return "", errors.New("not found")
 }
 
-func getDigestFromSingle(token string, repo string, digest string) (string, error) {
+func getDigestFromManifest(token string, repo string, digest string) (string, error) {
         var dat SingleT
 
         url := fmt.Sprintf(manifestUrlPattern, repo, digest)
-	logger.Info("dockerHub.getDigestFromSingle", "url", url)
+	logger.Info("dockerHub.getDigestFromManifest", "url", url)
 
 	if err := jsonreq.GetJsonResp(url, token, "application/vnd.oci.image.manifest.v1+json", &dat); err != nil {
-                logger.Error("dockerHub.getDigestFromSingle", "err", err)
+                logger.Error("dockerHub.getDigestFromManifest", "err", err)
                 return "", err
         }
+	// docker manifest
+	// "mediaType": "application/vnd.oci.image.manifest.v1+json"
+	// "mediaType": "application/vnd.docker.distribution.manifest.v2+json"
+	if dat.MediaType != "application/vnd.oci.image.manifest.v1+json" && dat.MediaType != "application/vnd.docker.distribution.manifest.v2+json" {
+		logger.Error("dockerHub.getDigestFromManifest", "MediaType", dat.MediaType)
+	}
 
-	logger.Info("dockerHub.getDigestFromSingle returning", "digest", dat.Config.Digest)
+	logger.Info("dockerHub.getDigestFromManifest returning", "digest", dat.Config.Digest)
         return dat.Config.Digest, nil
 }
 
@@ -145,9 +159,13 @@ func GetLastUpdate(host string, repo string, tag string) time.Time {
 
 	token := getToken(repo)
 	// get digest from master manifest
-	digest1, _ := getDigestFromManifests(token, repo, tag)
+	digest1, err := getDigestFromImageIndex(token, repo, tag)
+	if err != nil {
+		// there is no image index manifest, try a normal manifest
+		digest1 = tag
+	}
 	// get manifest for specific arch
-	digest2, _ := getDigestFromSingle(token, repo, digest1)
+	digest2, _ := getDigestFromManifest(token, repo, digest1)
 	datum, _ := getBlob(digest2, token, repo, tag)
 
 	//checkVersions(token, repo, tag)
