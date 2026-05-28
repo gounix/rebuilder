@@ -17,7 +17,7 @@ The next environment settings apply to the builder container that is spawned to 
 env:
   BUILDER_REPO: "docker.io"
   BUILDER_IMAGE: "gounix/builder"
-  BUILDER_TAG: "1.0"
+  BUILDER_TAG: "1.2.0"
   BUILDER_NAMESPACE: "rebuilder"
 ```
 The next section specifies the rebuilder image, these settings can be left as is unless you are mirroring the image to a local repo.
@@ -27,7 +27,7 @@ image:
   # This sets the pull policy for images.
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "1.1.0"
+  tag: "1.2.0"
 ```
 On the first deployment the custom resource definitions will be loaded:
 ```
@@ -114,7 +114,12 @@ The builder image contains the following software:
 
 If you need other software you can derive a custom image from the builder image and add additional software.
 
+# Migration notes
+
+When migrating to 1.2.0 the new helm chart should be used since it includes a change in the CRD. The builder image needs to be at version 1.2.0.
+
 # Change history
 
 * 1.0 5/12/2026 Initial version.
-* 1.1.0 5/26/2026 rebuilder checks if an image is newer than a running pod ans if so restarts the pod.
+* 1.1.0 5/26/2026 rebuilder checks if an image is newer than a running pod and if so restarts the pod.
+* 1.2.0 5/28/2026 The git section of the rebuild.yaml now supports a tag that can be used to checkout a specific version
