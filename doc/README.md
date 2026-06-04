@@ -27,7 +27,7 @@ image:
   # This sets the pull policy for images.
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "1.2.0"
+  tag: "1.3.0"
 ```
 On the first deployment the custom resource definitions will be loaded:
 ```
@@ -46,7 +46,7 @@ metadata:
   name: kube-sec-board
 spec:
   base:
-    host: ""
+    host: "registry-1.docker.io"
     type: "dockerHub"
     image: "library/python"
     tag: "3.14.2-slim"
@@ -124,3 +124,4 @@ When migrating to 1.2.0 the new helm chart should be used since it includes a ch
 * 1.0 5/12/2026 Initial version.
 * 1.1.0 5/26/2026 rebuilder checks if an image is newer than a running pod and if so restarts the pod.
 * 1.2.0 5/28/2026 The git section of the rebuild.yaml now supports a tag that can be used to checkout a specific version
+* 1.3.0 6/4/2026 Merged all registry code into one

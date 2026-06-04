@@ -28,7 +28,6 @@ import (
 	"log/slog"
 )
 
-
 func Debug(msg string, args ...any) {
 	slog.Debug(msg, args...)
 }

@@ -25,70 +25,70 @@ SOFTWARE.
 package resources
 
 import (
-	"os"
 	"context"
-	"fmt"
-	"path/filepath"
 	"encoding/json"
-	"rebuilder/logger"
-	"rebuilder/environ"
+	"fmt"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
+	"os"
+	"path/filepath"
+	"rebuilder/environ"
+	"rebuilder/logger"
 )
 
 const (
-	api = "gounix.nl"
+	api         = "gounix.nl"
 	api_version = "v1"
-	kind = "rebuilds"
+	kind        = "rebuilds"
 )
 
 type (
 	MetadataT struct {
-		Uid string `json:"uid"`
-		Name string `json:"name"`
+		Uid       string `json:"uid"`
+		Name      string `json:"name"`
 		Namespace string `json:"namespace"`
 	}
 	BaseT struct {
-		Host string `json:"host"`
-		Type string `json:"type"`
+		Host  string `json:"host"`
+		Type  string `json:"type"`
 		Image string `json:"image"`
-		Tag string `json:"tag"`
+		Tag   string `json:"tag"`
 	}
 	GitT struct {
-		Host string `json:"host"`
-		Project string `json:"project"`
-		User string `json:"user"`
-		Dir string `json:"dir"`
-		Tag string `json:"tag"`
+		Host       string `json:"host"`
+		Project    string `json:"project"`
+		User       string `json:"user"`
+		Dir        string `json:"dir"`
+		Tag        string `json:"tag"`
 		SecretName string `json:"secretName"`
 		SshKeyName string `json:"sshKeyName"`
 	}
 	RegistryT struct {
-		Host string `json:"host"`
-		Type string `json:"type"`
-		Image string `json:"image"`
-		Tag string `json:"tag"`
-		Authenticated bool `json:"authenticated"`
-		SecretName string `json:"secretName"`
+		Host          string `json:"host"`
+		Type          string `json:"type"`
+		Image         string `json:"image"`
+		Tag           string `json:"tag"`
+		Authenticated bool   `json:"authenticated"`
+		SecretName    string `json:"secretName"`
 	}
 	ActionsT struct {
 		Actiontype string `json:"objecttype"`
-		Name string `json:"name"`
+		Name       string `json:"name"`
 	}
 	SpecT struct {
-		Base BaseT `json:"base"`
-		Git GitT `json:"git"`
-		Registry RegistryT `json:"registry"`
-		Actions []ActionsT `json:"actions"`
+		Base     BaseT      `json:"base"`
+		Git      GitT       `json:"git"`
+		Registry RegistryT  `json:"registry"`
+		Actions  []ActionsT `json:"actions"`
 	}
 	RebuildT struct {
 		Metadata MetadataT `json:"metadata"`
-		Spec SpecT `json:"spec"`
+		Spec     SpecT     `json:"spec"`
 	}
 	RebuildListT struct {
-		ApiVersion string `json:"apiVersion"`
-		Items []RebuildT  `json:"items"`
+		ApiVersion string     `json:"apiVersion"`
+		Items      []RebuildT `json:"items"`
 	}
 )
 
@@ -126,7 +126,7 @@ func GetList() RebuildListT {
 	}
 
 	err = json.Unmarshal(out, &dat)
-        if err != nil {
+	if err != nil {
 		logger.Error("resources.GetList", "unmarshal error", err)
 		//os.Exit(1)
 	}

@@ -26,14 +26,13 @@ package main
 
 import (
 	"fmt"
-	"rebuilder/resources"
-	"rebuilder/registry"
-	"rebuilder/jobs"
-	"rebuilder/logger"
 	"rebuilder/actions"
 	"rebuilder/environ"
+	"rebuilder/jobs"
+	"rebuilder/logger"
+	"rebuilder/registry"
+	"rebuilder/resources"
 )
-
 
 func main() {
 	logger.Info("rebuilder.main run started", "version", "Development-version")
@@ -47,8 +46,8 @@ func main() {
 	// traverse the list and check if any base image is newer than the derived image
 	for _, entry := range list.Items {
 		logger.Info("rebuilder.main", "namespace", entry.Metadata.Namespace, "name", entry.Metadata.Name)
-		baseTime := registry.GetLastUpdate(entry.Spec.Base.Host, entry.Spec.Base.Type, entry.Spec.Base.Image, entry.Spec.Base.Tag)
-		derivedTime := registry.GetLastUpdate(entry.Spec.Registry.Host, entry.Spec.Registry.Type, entry.Spec.Registry.Image, entry.Spec.Registry.Tag)
+		baseTime := registry.GetLastUpdate(entry.Spec.Base.Host, entry.Spec.Base.Type, entry.Spec.Base.Image, entry.Spec.Base.Tag, "", "")
+		derivedTime := registry.GetLastUpdate(entry.Spec.Registry.Host, entry.Spec.Registry.Type, entry.Spec.Registry.Image, entry.Spec.Registry.Tag, "", "")
 
 		// if yes spawn a job to rebuild the derived image, or sync the image to the private registry
 		if baseTime.After(derivedTime) {

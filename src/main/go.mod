@@ -6,7 +6,6 @@ require (
 	go-simpler.org/env v0.12.0
 	rebuilder/jobs v0.0.0-unpublished
 	rebuilder/registry v0.0.0-unpublished
-	rebuilder/ghcr v0.0.0-unpublished
 	rebuilder/resources v0.0.0-unpublished
 	rebuilder/actions v0.0.0-unpublished
 	rebuilder/environ v0.0.0-unpublished
@@ -49,8 +48,6 @@ require (
 	k8s.io/klog/v2 v2.140.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a // indirect
 	k8s.io/utils v0.0.0-20260210185600-b8788abfbbc2 // indirect
-	rebuilder/dockerhub v0.0.0-unpublished // indirect
-	rebuilder/dockerregistry v0.0.0-unpublished // indirect
 	rebuilder/logger v0.0.0-unpublished // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
@@ -59,12 +56,9 @@ require (
 )
 
 replace rebuilder/registry v0.0.0-unpublished => ../registry
-replace rebuilder/dockerhub v0.0.0-unpublished => ../dockerhub
-replace rebuilder/dockerregistry v0.0.0-unpublished => ../dockerregistry
 replace rebuilder/resources v0.0.0-unpublished => ../resources
 replace rebuilder/jobs v0.0.0-unpublished => ../jobs
 replace rebuilder/logger v0.0.0-unpublished => ../logger
 replace rebuilder/actions v0.0.0-unpublished => ../actions
 replace rebuilder/environ v0.0.0-unpublished => ../environ
-replace rebuilder/ghcr v0.0.0-unpublished => ../ghcr
 replace rebuilder/jsonreq v0.0.0-unpublished => ../jsonreq

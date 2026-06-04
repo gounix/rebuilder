@@ -26,11 +26,11 @@ package jsonreq
 
 import (
 	//"fmt"
-        "net/http"
-        "encoding/json"
-        "io"
+	"encoding/json"
+	"io"
+	"net/http"
+	"rebuilder/logger"
 	"strings"
-        "rebuilder/logger"
 )
 
 func ratelimit(header http.Header) {
@@ -48,38 +48,36 @@ func ratelimit(header http.Header) {
 
 func GetJsonResp(url string, token string, accept string, dat any) error {
 
-	client := &http.Client{ }
-        req, err := http.NewRequest("GET", url, nil)
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
 	if accept != "" {
 		req.Header.Add("accept", accept)
 	}
 
 	if token != "" {
-		req.Header.Add("Authorization", "Bearer " + token)
+		req.Header.Add("Authorization", "Bearer "+token)
 	}
 
-        resp, err := client.Do(req)
-        if err != nil {
-                logger.Error("jsonreq.getJsonResp", "client.do error", err)
-                return err
-        }
+	resp, err := client.Do(req)
+	if err != nil {
+		logger.Error("jsonreq.getJsonResp", "client.do error", err)
+		return err
+	}
 
-        defer resp.Body.Close()
-        if resp.StatusCode != 200 {
-                logger.Error("jsonreq.getJsonResp", "status", resp.Status)
-                return err
-        }
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		logger.Error("jsonreq.getJsonResp", "status", resp.Status)
+		return err
+	}
 
 	// check if ratelimit header is present for dockerhub
 	ratelimit(resp.Header)
 
-        body, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		logger.Error("jsonreq.getJsonResp", "io.ReadAll error", err)
 		return err
-        }
+	}
 
-        return json.Unmarshal(body, dat)
+	return json.Unmarshal(body, dat)
 }
-
-

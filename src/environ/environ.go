@@ -25,26 +25,26 @@ SOFTWARE.
 package environ
 
 import (
-        "go-simpler.org/env"
-	"rebuilder/logger"
+	"go-simpler.org/env"
 	"os"
+	"rebuilder/logger"
 )
 
 type EnvT struct {
 	Standalone       bool   `env:"STANDALONE" default:false`
-        BuilderImage     string `env:"BUILDER_IMAGE,required"`
-        BuilderRepo      string `env:"BUILDER_REPO,required"`
-        BuilderTag       string `env:"BUILDER_TAG,required"`
-        BuilderNamespace string `env:"BUILDER_NAMESPACE,required"`
+	BuilderImage     string `env:"BUILDER_IMAGE,required"`
+	BuilderRepo      string `env:"BUILDER_REPO,required"`
+	BuilderTag       string `env:"BUILDER_TAG,required"`
+	BuilderNamespace string `env:"BUILDER_NAMESPACE,required"`
 }
 
 var Env EnvT
 
 func Load() error {
 	if err := env.Load(&Env, nil); err != nil {
-                logger.Error("rebuilder/environ", "env.Load", err)
+		logger.Error("rebuilder/environ", "env.Load", err)
 		os.Exit(1)
-        }
+	}
 	logger.Info("rebuilder.environ loaded environment", "STANDALONE", Env.Standalone, "BUILDER_REPO", Env.BuilderRepo, "BUILDER_IMAGE", Env.BuilderImage, "BUILDER_TAG", Env.BuilderTag, "BUILDER_NAMESPACE", Env.BuilderNamespace)
 	return nil
 }

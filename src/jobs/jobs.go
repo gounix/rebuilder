@@ -26,9 +26,8 @@ package jobs
 
 import (
 	"context"
-	"fmt"
-	"rebuilder/logger"
 	"errors"
+	"fmt"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,9 +37,10 @@ import (
 	"k8s.io/client-go/util/homedir"
 	"log/slog"
 	"path/filepath"
-	"time"
-	"rebuilder/resources"
 	"rebuilder/environ"
+	"rebuilder/logger"
+	"rebuilder/resources"
+	"time"
 )
 
 const sleepSeconds = 10
@@ -77,12 +77,12 @@ func newClientSet() (*kubernetes.Clientset, error) {
 // It'll return the yaml example to k8s job object
 func createJobSpec(name string, git resources.GitT, reg resources.RegistryT) *batchv1.Job {
 	var (
-		trueVal = true
-		zeroVal int32=0
+		trueVal           = true
+		zeroVal     int32 = 0
 		usernameVal corev1.EnvVarSource
 		passwordVal corev1.EnvVarSource
-		env []corev1.EnvVar
-		authEnv []corev1.EnvVar
+		env         []corev1.EnvVar
+		authEnv     []corev1.EnvVar
 	)
 
 	// add current timestamp, as job name should be unique
@@ -113,7 +113,6 @@ func createJobSpec(name string, git resources.GitT, reg resources.RegistryT) *ba
 		env = append(env, authEnv...)
 	}
 
-
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: name,
@@ -126,7 +125,7 @@ func createJobSpec(name string, git resources.GitT, reg resources.RegistryT) *ba
 							Name:            name,
 							Image:           fmt.Sprintf("%s/%s:%s", environ.Env.BuilderRepo, environ.Env.BuilderImage, environ.Env.BuilderTag),
 							ImagePullPolicy: "Always",
-							Env: env,
+							Env:             env,
 							SecurityContext: &corev1.SecurityContext{
 								Privileged: &trueVal,
 							},
@@ -194,7 +193,6 @@ func waitForJob(clientset *kubernetes.Clientset, jobName string) error {
 	}
 	return nil // unreachable
 }
-
 
 func RunBuildJob(git resources.GitT, reg resources.RegistryT) error {
 
