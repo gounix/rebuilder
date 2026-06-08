@@ -28,7 +28,7 @@ image:
   # This sets the pull policy for images.
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "1.3.0"
+  tag: "1.4.0"
 ```
 On the first deployment the custom resource definitions will be loaded:
 ```
@@ -51,6 +51,8 @@ spec:
     type: "dockerHub"
     image: "library/python"
     tag: "3.14.2-slim"
+    authenticated: true
+    secretName: "rebuilder/regcred"
   git:
     host: "git.int.gounix.nl"
     project: "images/kube-sec-board.git"
@@ -70,7 +72,7 @@ spec:
     - objecttype: deployment
       name: kube-sec-board
 ```
-In this example spec.base specifies the base image. Our custom image is built on-top of docker.io/library/python:3.14.2-slim. The spec.base.type and spec.registry.type fields can contain "dockerHub", "ghcr" or "dockerRegistry". In which dockerRegistry can be used for any registry that uses the docker registry v2 api (Quay.io for example).  
+In this example spec.base specifies the base image. Our custom image is built on-top of docker.io/library/python:3.14.2-slim. The spec.base.type and spec.registry.type fields can contain "dockerHub", "ghcr" or "dockerRegistry". In which dockerRegistry can be used for any registry that uses the docker registry v2 api (Quay.io for example). If a registry is authenticated set base.authenticated to true and specify the fully qualified path of a valid registry credential.  
 
 The spec.registry section specifies where our derived image is stored, in this case kube-sec-board:1.0 on our private registry that uses no authentication.   
 
@@ -99,7 +101,12 @@ The secret that is used in the spec.git section of the rebuild.yaml can be creat
 ```
 kubectl create secret -n rebuilder generic ssh-key   --from-file=./id_rsa
 ```
-This secret should be created in the rebuilder namespace. You can also use your favourite way(like vault for example) to create secrets in a secure way.
+This secret should be created in the rebuilder namespace.  
+The registry credentials are stored in a standard docker-registry secret and can be created in the following way
+```
+kubectl create secret docker-registry regcred --docker-server=ghcr.io --docker-username=<your-github-username> --docker-password=<your-personal-access-token> --docker-email=<your-email>
+```
+You can also use your favourite way(like vault for example) to create secrets in a secure way.
 
 # Notes about pullPolicy
 
@@ -127,4 +134,4 @@ When migrating to 1.4.0 the new helm chart should be used since a new environmen
 * 1.1.0 5/26/2026 rebuilder checks if an image is newer than a running pod and if so restarts the pod.
 * 1.2.0 5/28/2026 The git section of the rebuild.yaml now supports a tag that can be used to checkout a specific version
 * 1.3.0 6/4/2026 Merged all registry code into one
-* 1.4.0 ?/?/? Allow authentication on registries
+* 1.4.0 6/8/2026 Allow authentication on registries
