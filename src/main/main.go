@@ -32,13 +32,18 @@ import (
 	"rebuilder/logger"
 	"rebuilder/registry"
 	"rebuilder/resources"
+	"rebuilder/k8s"
+	"rebuilder/secret"
 )
 
 func main() {
-	logger.Info("rebuilder.main run started", "version", "Development-version")
+	logger.Info("rebuilder.main run started", "version", "Development-version", "go", "Golang-version")
 	if err := environ.Load(); err != nil {
 		logger.Error("rebuilder.main", "environ.Load", err)
 	}
+
+	// initialize k8s config
+	k8s.InitConfig()
 
 	// read all kubernetes resources
 	list := resources.GetList()
@@ -46,13 +51,17 @@ func main() {
 	// traverse the list and check if any base image is newer than the derived image
 	for _, entry := range list.Items {
 		logger.Info("rebuilder.main", "namespace", entry.Metadata.Namespace, "name", entry.Metadata.Name)
-		baseTime := registry.GetLastUpdate(entry.Spec.Base.Host, entry.Spec.Base.Type, entry.Spec.Base.Image, entry.Spec.Base.Tag, "", "")
-		derivedTime := registry.GetLastUpdate(entry.Spec.Registry.Host, entry.Spec.Registry.Type, entry.Spec.Registry.Image, entry.Spec.Registry.Tag, "", "")
+
+		user, passwd := secret.GetCredentials(entry.Spec.Base.Authenticated, entry.Spec.Base.SecretName)
+		baseTime := registry.GetLastUpdate(entry.Spec.Base.Host, entry.Spec.Base.Type, entry.Spec.Base.Image, entry.Spec.Base.Tag, user, passwd)
+
+		user, passwd = secret.GetCredentials(entry.Spec.Registry.Authenticated, entry.Spec.Registry.SecretName)
+		derivedTime := registry.GetLastUpdate(entry.Spec.Registry.Host, entry.Spec.Registry.Type, entry.Spec.Registry.Image, entry.Spec.Registry.Tag, user, passwd)
 
 		// if yes spawn a job to rebuild the derived image, or sync the image to the private registry
 		if baseTime.After(derivedTime) {
 			logger.Info("rebuilder.main", "base image", fmt.Sprintf("%s:%s", entry.Spec.Base.Image, entry.Spec.Base.Tag), "derived image", fmt.Sprintf("%s:%s", entry.Spec.Registry.Image, entry.Spec.Registry.Tag), "up-to-date", "NO")
-			err := jobs.RunBuildJob(entry.Spec.Git, entry.Spec.Registry)
+			err := jobs.RunBuildJob(entry.Spec.Git, entry.Spec.Registry, user, passwd)
 			if err != nil {
 				logger.Error("rebuilder.main", "job error", err)
 			} else {

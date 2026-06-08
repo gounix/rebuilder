@@ -32,61 +32,28 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/homedir"
-	"log/slog"
-	"path/filepath"
 	"rebuilder/environ"
 	"rebuilder/logger"
 	"rebuilder/resources"
+	"rebuilder/k8s"
 	"time"
 )
 
 const sleepSeconds = 10
 
-// newClient returns a kubernetes clientset from the given config path
-// if path is empty it'll try to load the default kube config else error
-func newClientSet() (*kubernetes.Clientset, error) {
-	var config *rest.Config
-	var err error
-	var kubeconfig string
-
-	if environ.Env.Standalone {
-		if home := homedir.HomeDir(); home != "" {
-			kubeconfig = filepath.Join(home, ".kube", "config")
-		} else {
-			return nil, fmt.Errorf("could not find kubeconfig")
-		}
-
-		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
-		if err != nil {
-			return nil, fmt.Errorf("error loading given file: %w", err)
-		}
-	} else {
-		config, err = rest.InClusterConfig()
-		if err != nil {
-			panic(err.Error())
-		}
-	}
-
-	return kubernetes.NewForConfig(config)
-}
-
 // createJobSpec returns a job object that can be applied to cluster
 // It'll return the yaml example to k8s job object
-func createJobSpec(name string, git resources.GitT, reg resources.RegistryT) *batchv1.Job {
+func createJobSpec(name string, git resources.GitT, reg resources.RegistryT, user string, passwd string) *batchv1.Job {
 	var (
 		trueVal           = true
 		zeroVal     int32 = 0
-		usernameVal corev1.EnvVarSource
-		passwordVal corev1.EnvVarSource
+		ttl         int32 = 259200 // seconds in 3 days
 		env         []corev1.EnvVar
 		authEnv     []corev1.EnvVar
 	)
 
 	// add current timestamp, as job name should be unique
-	name = fmt.Sprintf("%s--%d", name, time.Now().UTC().UnixMilli())
+	name = fmt.Sprintf("%s-%d", name, time.Now().UTC().UnixMilli())
 
 	env = []corev1.EnvVar{
 		// info from client-go applyconfigurations/internal/internal.go
@@ -99,16 +66,10 @@ func createJobSpec(name string, git resources.GitT, reg resources.RegistryT) *ba
 		{Name: "REGISTRY_HOST", Value: reg.Host},
 		{Name: "REGISTRY_AUTHENTICATED", Value: fmt.Sprintf("%t", reg.Authenticated)},
 	}
-	objectRef := corev1.LocalObjectReference{Name: reg.SecretName}
 	if reg.Authenticated == true {
-		usernameSelector := corev1.SecretKeySelector{Key: "username", LocalObjectReference: objectRef}
-		usernameVal = corev1.EnvVarSource{SecretKeyRef: &usernameSelector}
-
-		passwordSelector := corev1.SecretKeySelector{Key: "password", LocalObjectReference: objectRef}
-		passwordVal = corev1.EnvVarSource{SecretKeyRef: &passwordSelector}
 		authEnv = []corev1.EnvVar{
-			{Name: "REGISTRY_USER", ValueFrom: &usernameVal},
-			{Name: "REGISTRY_PASSWORD", ValueFrom: &passwordVal},
+			{Name: "REGISTRY_USER", Value: user},
+			{Name: "REGISTRY_PASSWORD", Value: passwd},
 		}
 		env = append(env, authEnv...)
 	}
@@ -165,6 +126,7 @@ func createJobSpec(name string, git resources.GitT, reg resources.RegistryT) *ba
 				},
 			},
 			BackoffLimit: &zeroVal,
+			TTLSecondsAfterFinished : &ttl,
 		},
 	}
 }
@@ -194,28 +156,21 @@ func waitForJob(clientset *kubernetes.Clientset, jobName string) error {
 	return nil // unreachable
 }
 
-func RunBuildJob(git resources.GitT, reg resources.RegistryT) error {
-
-	// get kubernetes clientset
-	clientset, err := newClientSet()
-	if err != nil {
-		slog.Error("error getting k8s clientset: %w", err)
-		return err
-	}
+func RunBuildJob(git resources.GitT, reg resources.RegistryT, user string, passwd string) error {
 
 	// get job spec
-	job := createJobSpec("builder", git, reg)
+	job := createJobSpec("builder", git, reg, user, passwd)
 
 	// create a client for default namespace
-	jobClient := clientset.BatchV1().Jobs(environ.Env.BuilderNamespace)
+	jobClient := k8s.ClientSet.BatchV1().Jobs(environ.Env.BuilderNamespace)
 
 	// trigger the job
-	_, err = jobClient.Create(context.TODO(), job, metav1.CreateOptions{})
+	_, err := jobClient.Create(context.TODO(), job, metav1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("error creating job: %w", err)
 	}
 
-	slog.Info("Job has been created successfully", "name", job.Name)
+	logger.Info("Job has been created successfully", "name", job.Name)
 
-	return waitForJob(clientset, job.ObjectMeta.Name)
+	return waitForJob(k8s.ClientSet, job.ObjectMeta.Name)
 }

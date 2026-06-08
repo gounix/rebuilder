@@ -25,7 +25,8 @@ SOFTWARE.
 package jsonreq
 
 import (
-	//"fmt"
+	"errors"
+	"fmt"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -67,7 +68,8 @@ func GetJsonResp(url string, token string, accept string, dat any) error {
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
 		logger.Error("jsonreq.getJsonResp", "status", resp.Status)
-		return err
+		str := fmt.Sprintf("status code %d", resp.StatusCode)
+		return errors.New(str)
 	}
 
 	// check if ratelimit header is present for dockerhub

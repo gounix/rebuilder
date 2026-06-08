@@ -10,6 +10,8 @@ require (
 	rebuilder/actions v0.0.0-unpublished
 	rebuilder/environ v0.0.0-unpublished
 	rebuilder/jsonreq v0.0.0-unpublished
+	rebuilder/k8s v0.0.0-unpublished
+	rebuilder/secret v0.0.0-unpublished
 )
 
 require (
@@ -62,3 +64,5 @@ replace rebuilder/logger v0.0.0-unpublished => ../logger
 replace rebuilder/actions v0.0.0-unpublished => ../actions
 replace rebuilder/environ v0.0.0-unpublished => ../environ
 replace rebuilder/jsonreq v0.0.0-unpublished => ../jsonreq
+replace rebuilder/k8s v0.0.0-unpublished => ../k8s
+replace rebuilder/secret v0.0.0-unpublished => ../secret

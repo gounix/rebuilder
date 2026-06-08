@@ -19,6 +19,7 @@ env:
   BUILDER_IMAGE: "gounix/builder"
   BUILDER_TAG: "1.2.0"
   BUILDER_NAMESPACE: "rebuilder"
+  REBUILDER_NAMESPACE: "rebuilder"
 ```
 The next section specifies the rebuilder image, these settings can be left as is unless you are mirroring the image to a local repo.
 ```
@@ -118,6 +119,7 @@ If you need other software you can derive a custom image from the builder image 
 # Migration notes
 
 When migrating to 1.2.0 the new helm chart should be used since it includes a change in the CRD. The builder image needs to be at version 1.2.0.
+When migrating to 1.4.0 the new helm chart should be used since a new environment variable is present.
 
 # Change history
 
@@ -125,3 +127,4 @@ When migrating to 1.2.0 the new helm chart should be used since it includes a ch
 * 1.1.0 5/26/2026 rebuilder checks if an image is newer than a running pod and if so restarts the pod.
 * 1.2.0 5/28/2026 The git section of the rebuild.yaml now supports a tag that can be used to checkout a specific version
 * 1.3.0 6/4/2026 Merged all registry code into one
+* 1.4.0 ?/?/? Allow authentication on registries

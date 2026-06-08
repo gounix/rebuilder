@@ -29,15 +29,10 @@ import (
 	"errors"
 	"fmt"
 	"time"
-	//"encoding/json"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/homedir"
-	"path/filepath"
-
-	"rebuilder/environ"
+	"rebuilder/k8s"
 	"rebuilder/logger"
 	"rebuilder/resources"
 )
@@ -112,31 +107,10 @@ func runSimpleAction(clientset *kubernetes.Clientset, namespace string, action r
 }
 
 func RunActions(namespace string, actions []resources.ActionsT) error {
-	var kubeconfig string
-
-	if environ.Env.Standalone {
-		if home := homedir.HomeDir(); home != "" {
-			kubeconfig = filepath.Join(home, ".kube", "config")
-		}
-	}
-
-	// use the current context in kubeconfig
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-	if err != nil {
-		logger.Error("actions.RunActions", "clientcmd.BuildConfigFromFlags", err)
-		return err
-	}
-
-	// create the clientset
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		logger.Error("actions.RunActions", "kubernetes.NewForConfig", err)
-		return err
-	}
 
 	for _, entry := range actions {
 		logger.Info("actions.RunActions", "namespace", namespace, "type", entry.Actiontype, "name", entry.Name)
-		if err := runSimpleAction(clientset, namespace, entry); err != nil {
+		if err := runSimpleAction(k8s.ClientSet, namespace, entry); err != nil {
 			logger.Info("actions.RunActions", "namespace", namespace, "type", entry.Actiontype, "name", entry.Name, "err", err)
 			return err
 		}

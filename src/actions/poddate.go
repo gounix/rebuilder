@@ -27,19 +27,14 @@ package actions
 import (
         "fmt"
         "context"
-	"path/filepath"
 	"time"
 	"strings"
 	"errors"
-	//corev1 "k8s.io/api/core/v1"
-	//appsv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
         "k8s.io/apimachinery/pkg/apis/meta/v1"
         "k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/util/homedir"
-	"k8s.io/client-go/tools/clientcmd"
 
+        "rebuilder/k8s"
         "rebuilder/logger"
-        "rebuilder/environ"
 	"rebuilder/resources"
 )
 
@@ -165,35 +160,14 @@ func restartAllowed(kind string, name string, actions []resources.ActionsT) bool
 }
 
 func RestartNeeded(namespace string, actions []resources.ActionsT, imageTime time.Time) error {
-	var kubeconfig string
-
-        if environ.Env.Standalone {
-                if home := homedir.HomeDir(); home != "" {
-                        kubeconfig = filepath.Join(home, ".kube", "config")
-                }
-        }
-
-        // use the current context in kubeconfig
-        config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-        if err != nil {
-                logger.Error("actions.RestartNeeded", "clientcmd.BuildConfigFromFlags", err)
-                return err
-        }
-
-        // create the clientset
-        clientset, err := kubernetes.NewForConfig(config)
-        if err != nil {
-                logger.Error("actions.RestartNeeded", "kubernetes.NewForConfig", err)
-                return err
-        }
 
 	// list pods with startdate and owner
-	podlist := listPods(clientset, namespace)
+	podlist := listPods(k8s.ClientSet, namespace)
 
 	// trace back to deployments, daemonsets, ... 
 	for _, entry := range podlist {
 		logger.Info("actions.RestartNeeded", "kind", entry.Kind, "name", entry.Name, "startedAt", entry.StartedAt)
-		restartKind, restartName, err := findParent(clientset, namespace, entry.Kind, entry.Name)
+		restartKind, restartName, err := findParent(k8s.ClientSet, namespace, entry.Kind, entry.Name)
 		if err != nil {
 			logger.Error("actions.RestartNeeded", "findParent", err)
 			continue

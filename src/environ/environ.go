@@ -31,11 +31,12 @@ import (
 )
 
 type EnvT struct {
-	Standalone       bool   `env:"STANDALONE" default:false`
-	BuilderImage     string `env:"BUILDER_IMAGE,required"`
-	BuilderRepo      string `env:"BUILDER_REPO,required"`
-	BuilderTag       string `env:"BUILDER_TAG,required"`
-	BuilderNamespace string `env:"BUILDER_NAMESPACE,required"`
+	Standalone         bool   `env:"STANDALONE" default:false`
+	BuilderImage       string `env:"BUILDER_IMAGE,required"`
+	BuilderRepo        string `env:"BUILDER_REPO,required"`
+	BuilderTag         string `env:"BUILDER_TAG,required"`
+	BuilderNamespace   string `env:"BUILDER_NAMESPACE,required"`
+	RebuilderNamespace string `env:"REBUILDER_NAMESPACE,required"`
 }
 
 var Env EnvT
@@ -45,6 +46,6 @@ func Load() error {
 		logger.Error("rebuilder/environ", "env.Load", err)
 		os.Exit(1)
 	}
-	logger.Info("rebuilder.environ loaded environment", "STANDALONE", Env.Standalone, "BUILDER_REPO", Env.BuilderRepo, "BUILDER_IMAGE", Env.BuilderImage, "BUILDER_TAG", Env.BuilderTag, "BUILDER_NAMESPACE", Env.BuilderNamespace)
+	logger.Info("rebuilder.environ loaded environment", "STANDALONE", Env.Standalone, "BUILDER_REPO", Env.BuilderRepo, "BUILDER_IMAGE", Env.BuilderImage, "BUILDER_TAG", Env.BuilderTag, "BUILDER_NAMESPACE", Env.BuilderNamespace, "REBUILDER_NAMESPACE", Env.RebuilderNamespace)
 	return nil
 }

@@ -9,6 +9,7 @@ env:
   BUILDER_IMAGE: "gounix/builder"
   BUILDER_TAG: "1.2.0"
   BUILDER_NAMESPACE: "rebuilder"
+  REBUILDER_NAMESPACE: "rebuilder"
 
 # This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
 image:
@@ -16,7 +17,7 @@ image:
   # This sets the pull policy for images.
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "1.2.0"
+  tag: "1.4.0"
 
 # This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
 replicaCount: 1

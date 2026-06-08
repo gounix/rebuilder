@@ -178,7 +178,7 @@ func getToken(realm string, service string, repo string, user string, passwd str
 		return ""
 	}
 
-	logger.Info("registry.getToken", "token", dat.Token[:10], "expires_in", dat.ExpiresIn, "issued_at", dat.IssuedAt)
+	logger.Info("registry.getToken", "token(truncated)", dat.Token[:10], "expires_in", dat.ExpiresIn, "issued_at", dat.IssuedAt)
 	return dat.Token
 }
 
@@ -188,14 +188,14 @@ func getDigestFromImageIndex(host string, token string, repo string, tag string)
 	url := fmt.Sprintf(manifestUrlPattern, host, repo, tag)
 	logger.Info("registry.getDigestFromImageIndex", "url", url)
 
-	if err := jsonreq.GetJsonResp(url, token, "application/vnd.oci.image.index.v1+json", &dat); err != nil {
+	if err := jsonreq.GetJsonResp(url, token, "application/vnd.docker.distribution.manifest.v2+json,application/vnd.oci.image.index.v1+json", &dat); err != nil {
 		logger.Error("registry.getDigestFromImageIndex", "err", err)
 		return "", err
 	}
 	// multi architecture manifest list
 	if dat.MediaType != "application/vnd.oci.image.index.v1+json" &&
 	   dat.MediaType != "application/vnd.docker.distribution.manifest.list.v2+json" {
-		logger.Error("registry.getDigestFromImageIndex", "MediaType", dat.MediaType)
+		logger.Warn("registry.getDigestFromImageIndex", "MediaType", dat.MediaType)
 	}
 
 	for _, entry := range dat.Manifest {
@@ -216,14 +216,14 @@ func getDigestFromManifest(host string, token string, repo string, digest string
 	url := fmt.Sprintf(manifestUrlPattern, host, repo, digest)
 	logger.Info("registry.getDigestFromManifest", "url", url)
 
-	if err := jsonreq.GetJsonResp(url, token, "application/vnd.oci.image.manifest.v1+json", &dat); err != nil {
+	if err := jsonreq.GetJsonResp(url, token, "application/vnd.docker.distribution.manifest.v2+json,application/vnd.oci.image.manifest.v1+json", &dat); err != nil {
 		logger.Error("registry.getDigestFromManifest", "err", err)
 		return "", err
 	}
 	// docker manifest
 	if dat.MediaType != "application/vnd.oci.image.manifest.v1+json" && 
 	   dat.MediaType != "application/vnd.docker.distribution.manifest.v2+json" {
-		logger.Error("registry.getDigestFromManifest", "MediaType", dat.MediaType)
+		logger.Warn("registry.getDigestFromManifest", "MediaType", dat.MediaType)
 	}
 
 	logger.Info("registry.getDigestFromManifest returning", "digest", dat.Config.Digest)

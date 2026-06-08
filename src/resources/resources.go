@@ -28,13 +28,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/homedir"
 	"os"
-	"path/filepath"
-	"rebuilder/environ"
 	"rebuilder/logger"
+	"rebuilder/k8s"
 )
 
 const (
@@ -50,10 +46,12 @@ type (
 		Namespace string `json:"namespace"`
 	}
 	BaseT struct {
-		Host  string `json:"host"`
-		Type  string `json:"type"`
-		Image string `json:"image"`
-		Tag   string `json:"tag"`
+		Host          string `json:"host"`
+		Type          string `json:"type"`
+		Image         string `json:"image"`
+		Tag           string `json:"tag"`
+		Authenticated bool   `json:"authenticated"`
+		SecretName    string `json:"secretName"`
 	}
 	GitT struct {
 		Host       string `json:"host"`
@@ -95,31 +93,9 @@ type (
 func GetList() RebuildListT {
 	// get the list of rebuild resources from k8s
 	var dat RebuildListT
-	var kubeconfig string
-
-	if environ.Env.Standalone {
-		if home := homedir.HomeDir(); home != "" {
-			kubeconfig = filepath.Join(home, ".kube", "config")
-			// if kubeconfig is empty, BuildConfigFromFlags uses the incluster config
-		}
-	}
-
-	// use the current context in kubeconfig
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-	if err != nil {
-		logger.Error("resources.GetList", "clientcmd.BuildConfigFromFlags", err)
-		os.Exit(1)
-	}
-
-	// create the clientset
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		logger.Error("resources.GetList", "kubernetes.NewForConfig", err)
-		os.Exit(1)
-	}
 
 	url := fmt.Sprintf("/apis/%s/%s/%s/", api, api_version, kind)
-	out, err := clientset.RESTClient().Get().AbsPath(url).DoRaw(context.TODO())
+	out, err := k8s.ClientSet.RESTClient().Get().AbsPath(url).DoRaw(context.TODO())
 	if err != nil {
 		logger.Error("resources.GetList", "clientset.RESTClient", err)
 		os.Exit(1)
