@@ -12,6 +12,8 @@ require (
 	rebuilder/jsonreq v0.0.0-unpublished
 	rebuilder/k8s v0.0.0-unpublished
 	rebuilder/secret v0.0.0-unpublished
+	rebuilder/data v0.0.0-unpublished
+	rebuilder/frontend v0.0.0-unpublished
 )
 
 require (
@@ -66,3 +68,5 @@ replace rebuilder/environ v0.0.0-unpublished => ../environ
 replace rebuilder/jsonreq v0.0.0-unpublished => ../jsonreq
 replace rebuilder/k8s v0.0.0-unpublished => ../k8s
 replace rebuilder/secret v0.0.0-unpublished => ../secret
+replace rebuilder/data v0.0.0-unpublished => ../data
+replace rebuilder/frontend v0.0.0-unpublished => ../frontend

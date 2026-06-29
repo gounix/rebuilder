@@ -34,22 +34,25 @@ import (
 	"rebuilder/resources"
 	"rebuilder/k8s"
 	"rebuilder/secret"
+	"rebuilder/data"
+	"rebuilder/frontend"
 )
 
-func main() {
-	logger.Info("rebuilder.main run started", "version", "Development-version", "go", "Golang-version")
-	if err := environ.Load(); err != nil {
-		logger.Error("rebuilder.main", "environ.Load", err)
-	}
+func buildCycle() {
+	logger.Info("rebuilder.main buildCycle started")
 
-	// initialize k8s config
-	k8s.InitConfig()
 
-	// read all kubernetes resources
+	// read all kubernetes resources and make a planning for the day
 	list := resources.GetList()
+	numEntries := len(list.Items)
+	startCycle()
 
 	// traverse the list and check if any base image is newer than the derived image
-	for _, entry := range list.Items {
+	for seqNr, entry := range list.Items {
+		var buildSuccessful  = true
+		var actionSuccessful = true
+
+		waitForNext(seqNr, numEntries)
 		logger.Info("rebuilder.main", "namespace", entry.Metadata.Namespace, "name", entry.Metadata.Name)
 
 		user, passwd := secret.GetCredentials(entry.Spec.Base.Authenticated, entry.Spec.Base.SecretName)
@@ -63,19 +66,50 @@ func main() {
 			logger.Info("rebuilder.main", "base image", fmt.Sprintf("%s:%s", entry.Spec.Base.Image, entry.Spec.Base.Tag), "derived image", fmt.Sprintf("%s:%s", entry.Spec.Registry.Image, entry.Spec.Registry.Tag), "up-to-date", "NO")
 			err := jobs.RunBuildJob(entry.Spec.Git, entry.Spec.Registry, user, passwd)
 			if err != nil {
+				buildSuccessful = false
 				logger.Error("rebuilder.main", "job error", err)
 			} else {
 				// execute any after actions, restart deployment f.e.
 				if err = actions.RunActions(entry.Metadata.Namespace, entry.Spec.Actions); err != nil {
+					actionSuccessful = false
 					logger.Error("rebuilder.main", "actions.RunActions error", err)
 				}
 			}
 		} else {
 			if err := actions.RestartNeeded(entry.Metadata.Namespace, entry.Spec.Actions, derivedTime); err != nil {
+				actionSuccessful = false
 				logger.Error("rebuilder.main", "actions.RestartNeeded error", err)
 			}
 			logger.Info("rebuilder.main", "derived image", fmt.Sprintf("%s:%s", entry.Spec.Registry.Image, entry.Spec.Registry.Tag), "up-to-date", "OK")
 		}
+		data.Put(entry.Metadata.Namespace,entry.Metadata.Name, 
+			fmt.Sprintf("%s/%s:%s", entry.Spec.Base.Host, entry.Spec.Base.Image, entry.Spec.Base.Tag),
+			fmt.Sprintf("%s/%s:%s", entry.Spec.Registry.Host, entry.Spec.Registry.Image, entry.Spec.Registry.Tag),
+			baseTime.After(derivedTime), buildSuccessful, actionSuccessful)
+		//logger.Info("rebuilder.main", "sleep minutes", int(sleepTime))
+		//time.Sleep(time.Duration(sleepTime) * time.Minute)
 	}
-	logger.Info("rebuilder.main run finished")
+	waitForEnd()
+	logger.Info("rebuilder.main buildCycle finished")
+}
+
+func main() {
+	logger.Info("rebuilder.main run started", "version", "Development-version", "go", "Golang-version")
+	if err := environ.Load(); err != nil {
+		logger.Error("rebuilder.main", "environ.Load", err)
+	}
+
+	// initialize k8s config
+	k8s.InitConfig()
+
+	// start web frontend and prometheus exporter
+	go frontend.Server()
+
+	// start the buildCycle
+	for {
+		// wait for start of build window
+		waitForStart()
+
+		buildCycle()
+	}
 }

@@ -153,7 +153,7 @@ func waitForJob(clientset *kubernetes.Clientset, jobName string) error {
 		}
 		time.Sleep(sleepSeconds * time.Second)
 	}
-	return nil // unreachable
+	return nil // unreachable code
 }
 
 func RunBuildJob(git resources.GitT, reg resources.RegistryT, user string, passwd string) error {

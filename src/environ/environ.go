@@ -37,6 +37,9 @@ type EnvT struct {
 	BuilderTag         string `env:"BUILDER_TAG,required"`
 	BuilderNamespace   string `env:"BUILDER_NAMESPACE,required"`
 	RebuilderNamespace string `env:"REBUILDER_NAMESPACE,required"`
+	Port               int    `env:"PORT,required"`
+	BuildHourStart     int    `env:"BUILD_HOUR_START,required"`
+	BuildHours         int    `env:"BUILD_HOURS,required"`
 }
 
 var Env EnvT
@@ -46,6 +49,14 @@ func Load() error {
 		logger.Error("rebuilder/environ", "env.Load", err)
 		os.Exit(1)
 	}
-	logger.Info("rebuilder.environ loaded environment", "STANDALONE", Env.Standalone, "BUILDER_REPO", Env.BuilderRepo, "BUILDER_IMAGE", Env.BuilderImage, "BUILDER_TAG", Env.BuilderTag, "BUILDER_NAMESPACE", Env.BuilderNamespace, "REBUILDER_NAMESPACE", Env.RebuilderNamespace)
+	if Env.BuildHourStart < 0 || Env.BuildHourStart >= 24 {
+		logger.Error("rebuilder/environ BuildHourStart < 0 or >= 24", "BuildHourStart", Env.BuildHourStart)
+		os.Exit(1)
+	}
+	if Env.BuildHours < 0 || Env.BuildHours > 24 {
+		logger.Error("rebuilder/environ BuildHours < 0 or > 24", "BuildHours", Env.BuildHours)
+		os.Exit(1)
+	}
+	logger.Info("rebuilder.environ loaded environment", "STANDALONE", Env.Standalone, "BUILDER_REPO", Env.BuilderRepo, "BUILDER_IMAGE", Env.BuilderImage, "BUILDER_TAG", Env.BuilderTag, "BUILDER_NAMESPACE", Env.BuilderNamespace, "REBUILDER_NAMESPACE", Env.RebuilderNamespace, "PORT", Env.Port, "BUILD_HOUR_START", Env.BuildHourStart, "BUILD_HOURS", Env.BuildHours)
 	return nil
 }

@@ -12,7 +12,7 @@ RUN go mod tidy -C main
 RUN sed -i s/Development-version/${REBUILDER_VERSION}/ /main/main.go
 RUN sed -i s/Golang-version/${GOVERSION}/ /main/main.go
 
-RUN go build -C main -o rebuilder main.go
+RUN go build -C main -o rebuilder main.go timer.go
 
 FROM docker.io/library/golang:${GOVERSION}-alpine
 ARG GOVERSION
