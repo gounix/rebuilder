@@ -7,20 +7,25 @@ The rebuilder deployment makes it possible to automatically update your images o
 Get the helm chart from [github](https://github.com/gounix/rebuilder/tree/main/helm-charts)
 There following paramers should be changed in the provided values.yaml:
 
-The deployment runs a cronjob, the schedule defines when the job should be run
-```
-schedule: "0 17 * * *"
-```
-
-The next environment settings apply to the builder container that is spawned to do the actual rebuilding. The BUILDER_NAMESPACE should match the namespace where the rebuilder deployment is installed, for this example we will use rebuilder.
 ```
 env:
+  # Settings for the builder image
   BUILDER_REPO: "docker.io"
   BUILDER_IMAGE: "gounix/builder"
-  BUILDER_TAG: "1.2.0"
+  BUILDER_TAG: "1.2.1"
+  # The namespace where the builder jobs will be spawned
   BUILDER_NAMESPACE: "rebuilder"
   REBUILDER_NAMESPACE: "rebuilder"
+  # The tcp port at which the prometheus metrics can be scraped
+  PORT: 8080
+  # the hour at which the build window starts. Must be in a 24 hour time format
+  BUILD_HOUR_START: 20
+  # The number of hours the build window lasts
+  BUILD_HOURS: 8
+  # The local time zone, to make sure logging and scheduling occur at the right time
+  TZ: "Europe/Amsterdam"
 ```
+The work is distributed over the build window. In this way your docker rate-limit will not be exhausted.
 The next section specifies the rebuilder image, these settings can be left as is unless you are mirroring the image to a local repo.
 ```
 image:
@@ -28,7 +33,20 @@ image:
   # This sets the pull policy for images.
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "1.4.0"
+  tag: "2.0.0"
+```
+To use the prometheus metrics the metrics section has to be adjusted to your environent:
+```
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    # the prometheus namespace where the serviceMonitor should be created
+    namespace: prometheus
+    # additional labels to add to the serviceMonitor to make prometheus recognize them
+    # Thus must match the serviceMonitorSelector in the prometheus resource
+    labels:
+      release: prometheus
 ```
 On the first deployment the custom resource definitions will be loaded:
 ```
@@ -110,7 +128,7 @@ You can also use your favourite way(like vault for example) to create secrets in
 
 # Notes about pullPolicy
 
-The rebuilder deployment does not change version numbers, it just rebuild existing images. To make sure kubernetes will pull the new image the pullPolicy should be set to Always on all deployments that use rebuild.
+The rebuilder deployment does not change version numbers of the images it manages, it just rebuild existing images. To make sure kubernetes will pull the new image the pullPolicy should be set to Always on all deployments that use rebuild.
 
 # Builder image
 
@@ -127,6 +145,7 @@ If you need other software you can derive a custom image from the builder image 
 
 When migrating to 1.2.0 the new helm chart should be used since it includes a change in the CRD. The builder image needs to be at version 1.2.0.
 When migrating to 1.4.0 the new helm chart should be used since a new environment variable is present.
+When migrating to 2.0.0 the new helm chart should be used since the cronjob is replaced by a replicaset.
 
 # Change history
 
@@ -135,3 +154,4 @@ When migrating to 1.4.0 the new helm chart should be used since a new environmen
 * 1.2.0 5/28/2026 The git section of the rebuild.yaml now supports a tag that can be used to checkout a specific version
 * 1.3.0 6/4/2026 Merged all registry code into one
 * 1.4.0 6/8/2026 Allow authentication on registries
+* 2.0.0 6/29/2026 Replaced cronjob by replicaset, added prometheus metrics, added a build window
