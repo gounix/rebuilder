@@ -2,14 +2,27 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-schedule: "0 17 * * *"
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    # the prometheus namespace where the serviceMonitor should be created
+    namespace: prometheus
+    # additional labels to add to the serviceMonitor to make prometheus recognize them
+    # Thus must match the serviceMonitorSelector in the prometheus resource
+    labels:
+      release: prometheus
 
 env:
   BUILDER_REPO: "docker.io"
   BUILDER_IMAGE: "gounix/builder"
-  BUILDER_TAG: "1.2.0"
+  BUILDER_TAG: "1.2.1"
   BUILDER_NAMESPACE: "rebuilder"
   REBUILDER_NAMESPACE: "rebuilder"
+  PORT: 8080
+  BUILD_HOUR_START: 20
+  BUILD_HOURS: 8
+  TZ: "Europe/Amsterdam"
 
 # This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
 image:
@@ -17,7 +30,7 @@ image:
   # This sets the pull policy for images.
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "1.4.0"
+  tag: "2.0.0"
 
 # This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
 replicaCount: 1
@@ -47,23 +60,27 @@ podAnnotations: {}
 # For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
 podLabels: {}
 
-podSecurityContext: {}
-  # fsGroup: 2000
+podSecurityContext:
+  runAsUser: 60000
+  runAsGroup: 60000
 
-securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  seccompProfile:
+    type: RuntimeDefault
+  runAsNonRoot: true
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
 
 # This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/
 service:
   # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
   type: ClusterIP
   # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
-  port: 80
+  port: 8080
 
 # This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
 ingress:
@@ -135,12 +152,12 @@ resources: {}
 # This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
 livenessProbe:
   httpGet:
-    path: /
-    port: http
+    path: /health
+    port: metrics
 readinessProbe:
   httpGet:
-    path: /
-    port: http
+    path: /health
+    port: metrics
 
 # This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
 autoscaling:
