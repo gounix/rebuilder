@@ -36,6 +36,7 @@ import (
 	"rebuilder/logger"
 	"rebuilder/resources"
 	"rebuilder/k8s"
+	"rebuilder/secret"
 	"time"
 )
 
@@ -138,6 +139,7 @@ func waitForJob(clientset *kubernetes.Clientset, jobName string) error {
 		if err != nil {
 			return err
 		}
+		//logger.Info("jobs.waitForJob", "status", job.Status)
 		if job.Status.Succeeded > 0 {
 			logger.Info("jobs.waitForJob succeeded", "job", jobName)
 			return nil // Job ran successfully
@@ -158,6 +160,13 @@ func waitForJob(clientset *kubernetes.Clientset, jobName string) error {
 
 func RunBuildJob(git resources.GitT, reg resources.RegistryT, user string, passwd string) error {
 
+	// verify if the ssh key exists
+	_, err := secret.GetSshKeyFromSecret(git.SecretName, git.SshKeyName)
+	if err != nil {
+		logger.Error("jobs.RunBuildJob secret", "err", err)
+		return err
+	}
+
 	// get job spec
 	job := createJobSpec("builder", git, reg, user, passwd)
 
@@ -165,7 +174,7 @@ func RunBuildJob(git resources.GitT, reg resources.RegistryT, user string, passw
 	jobClient := k8s.ClientSet.BatchV1().Jobs(environ.Env.BuilderNamespace)
 
 	// trigger the job
-	_, err := jobClient.Create(context.TODO(), job, metav1.CreateOptions{})
+	_, err = jobClient.Create(context.TODO(), job, metav1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("error creating job: %w", err)
 	}

@@ -26,6 +26,7 @@ package frontend
 
 import (
         "fmt"
+	"strings"
         "net/http"
         "rebuilder/data"
         "rebuilder/environ"
@@ -42,8 +43,8 @@ func logRequest(r *http.Request) {
 func sendPromLines(w http.ResponseWriter, entry data.ProjectT) {
         var str string
 
-        str = fmt.Sprintf("rebuilder_stats{name=\"%s/%s\",base=\"%s\", target=\"%s\",updated=\"%t\",buildSuccessful=\"%t\",actionSuccessful=\"%t\",timestamp=\"%s\"} 1\n", 
-		entry.Namespace, entry.Name, entry.BaseImage, entry.TargetImage, entry.Updated, entry.BuildSuccessful, entry.ActionSuccessful, entry.Timestamp.Format("2006-01-02 15:04:05"))
+        str = fmt.Sprintf("rebuilder_stats{name=\"%s/%s\",base=\"%s\", target=\"%s\",updated=\"%t\",srcOK=\"%t\",dstOK=\"%t\",buildOK=\"%t\",actionOK=\"%t\",timestamp=\"%s\",err=\"%s\"} 1\n", 
+		entry.Namespace, entry.Name, entry.BaseImage, entry.TargetImage, entry.Updated, entry.Status.SrcOK, entry.Status.DstOK, entry.Status.BuildOK, entry.Status.ActionOK, entry.Timestamp.Format("2006-01-02 15:04:05"), strings.ReplaceAll(entry.Status.Message,"\"", ""))
         fmt.Fprintf(w, str)
         logger.Info("frontend.sendPromLines", "str", str)
 }

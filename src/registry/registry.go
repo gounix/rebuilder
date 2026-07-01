@@ -188,8 +188,11 @@ func getDigestFromImageIndex(host string, token string, repo string, tag string)
 	url := fmt.Sprintf(manifestUrlPattern, host, repo, tag)
 	logger.Info("registry.getDigestFromImageIndex", "url", url)
 
-	if err := jsonreq.GetJsonResp(url, token, "application/vnd.docker.distribution.manifest.v2+json,application/vnd.oci.image.index.v1+json", &dat); err != nil {
-		logger.Error("registry.getDigestFromImageIndex", "err", err)
+	// application/vnd.docker.distribution.manifest.list.v2+json added for gcr.io
+	// application/vnd.oci.image.manifest.v1+json for dockerhub
+	if err := jsonreq.GetJsonResp(url, token, "application/vnd.docker.distribution.manifest.list.v2+json,application/vnd.oci.image.index.v1+json", &dat); err != nil {
+		// not always present, so no error
+		logger.Info("registry.getDigestFromImageIndex", "err", err)
 		return "", err
 	}
 	// multi architecture manifest list
@@ -206,7 +209,7 @@ func getDigestFromImageIndex(host string, token string, repo string, tag string)
 			return entry.Digest, nil
 		}
 	}
-	logger.Error("registry.getDigestFromImageIndex return not found")
+	logger.Error("registry.getDigestFromImageIndex return architecture not found")
 	return "", errors.New("not found")
 }
 
@@ -246,7 +249,7 @@ func getBlob(host string, digest string, token string, repo string, tag string) 
 	return dat.Created, nil
 }
 
-func GetLastUpdate(host string, host_type string, repo string, tag string, user string, passwd string) time.Time {
+func GetLastUpdate(host string, host_type string, repo string, tag string, user string, passwd string) (time.Time, error) {
 	token := ""
 	realm, service := checkAuth(host, repo, user, passwd)
 	if realm != "" && service != "" {
@@ -258,8 +261,16 @@ func GetLastUpdate(host string, host_type string, repo string, tag string, user 
 		digest1 = tag
 	}
 	// get manifest for specific arch
-	digest2, _ := getDigestFromManifest(host, token, repo, digest1)
-	datum, _ := getBlob(host, digest2, token, repo, tag)
+	digest2, err := getDigestFromManifest(host, token, repo, digest1)
+	if err != nil {
+		logger.Error("registry.GetLastUpdate", "err", err)
+		return time.Time{}, err
+	}
+	datum, err := getBlob(host, digest2, token, repo, tag)
+	if err != nil {
+		logger.Error("registry.GetLastUpdate", "err", err)
+		return time.Time{}, err
+	}
 
-	return datum
+	return datum, nil
 }

@@ -155,3 +155,4 @@ When migrating to 2.0.0 the new helm chart should be used since the cronjob is r
 * 1.3.0 6/4/2026 Merged all registry code into one
 * 1.4.0 6/8/2026 Allow authentication on registries
 * 2.0.0 6/29/2026 Replaced cronjob by replicaset, added prometheus metrics, added a build window
+* 2.1.0 7/1/2026 Better error handling, support for gcr.io

@@ -33,14 +33,20 @@ import (
 )
 
 type (
+	StatusT struct {
+		SrcOK    bool      // is the src registry accessible
+		DstOK    bool      // is the dst registry accessible
+		BuildOK  bool      // did the build job fail
+		ActionOK bool      // was the restart succesful
+		Message  string    // last error message
+	}
 	ProjectT struct {
 		Namespace        string    // of the rebuild.yaml
 		Name             string    // of the rebuild.yaml
 		BaseImage        string    // registry/namespace/name:tag
 		TargetImage      string    // registry/namespace/name:tag
 		Updated          bool      // was this image updated during the last run
-		BuildSuccessful  bool      // did the build job fail
-		ActionSuccessful bool      // was the restart succesful
+		Status           StatusT   // detailed statusses
 		Timestamp        time.Time // timestamp of last update
 	}
 	dataT struct {
@@ -52,19 +58,18 @@ type (
 
 var data = dataT{ initialized: false }
 
-func Put(namespace string, name string, baseImage string, targetImage string, updated bool, buildSuccessful bool, actionSuccessful bool) {
+func Put(namespace string, name string, baseImage string, targetImage string, updated bool, status StatusT) {
 	data.mu.Lock()
 	defer data.mu.Unlock()
 
 	found := false
 	for nr, _ := range data.projects {
 		if data.projects[nr].Namespace == namespace && data.projects[nr].Name == name {
-			data.projects[nr].BaseImage        = baseImage
-			data.projects[nr].TargetImage      = targetImage
-			data.projects[nr].Updated          = updated
-			data.projects[nr].BuildSuccessful  = buildSuccessful
-			data.projects[nr].ActionSuccessful = actionSuccessful
-			data.projects[nr].Timestamp        = time.Now()
+			data.projects[nr].BaseImage   = baseImage
+			data.projects[nr].TargetImage = targetImage
+			data.projects[nr].Updated     = updated
+			data.projects[nr].Status      = status
+			data.projects[nr].Timestamp   = time.Now()
 
 			data.initialized = true
 			found = true
@@ -72,27 +77,28 @@ func Put(namespace string, name string, baseImage string, targetImage string, up
 			logger.Info("data.Put updated", 
 				"project", fmt.Sprintf("%s/%s", namespace, name), 
 				"baseImage", baseImage, "targetImage", targetImage, 
-				"updated", updated, "buildSuccessful", buildSuccessful, "actionSuccessful", actionSuccessful)
+				"updated", updated, "SrcOK", status.SrcOK, "DstOK", status.DstOK, 
+				"buildOK", status.BuildOK, "actionOK", status.ActionOK)
 		}
 	}
 	if ! found {
 		var newEntry ProjectT
 
-		newEntry.Namespace        = namespace
-		newEntry.Name             = name
-		newEntry.BaseImage        = baseImage
-		newEntry.TargetImage      = targetImage
-		newEntry.Updated          = updated
-		newEntry.BuildSuccessful  = buildSuccessful
-		newEntry.ActionSuccessful = actionSuccessful
-		newEntry.Timestamp        = time.Now()
+		newEntry.Namespace   = namespace
+		newEntry.Name        = name
+		newEntry.BaseImage   = baseImage
+		newEntry.TargetImage = targetImage
+		newEntry.Updated     = updated
+		newEntry.Status      = status
+		newEntry.Timestamp   = time.Now()
 
 		data.projects = append(data.projects, newEntry)
 		data.initialized = true
 		logger.Info("data.Put initialized", 
 			"project", fmt.Sprintf("%s/%s", namespace, name), 
 			"baseImage", baseImage, "targetImage", targetImage, 
-			"updated", updated, "buildSuccessful", buildSuccessful, "actionSuccessful", actionSuccessful)
+			"updated", updated, "SrcOK", status.SrcOK, "DstOK", status.DstOK, 
+			"buildOK", status.BuildOK, "actionOK", status.ActionOK)
 	}
 }
 

@@ -49,35 +49,59 @@ func buildCycle() {
 
 	// traverse the list and check if any base image is newer than the derived image
 	for seqNr, entry := range list.Items {
-		var buildSuccessful  = true
-		var actionSuccessful = true
+		status := data.StatusT {
+			SrcOK: true,
+			DstOK: true,
+			BuildOK: true,
+			ActionOK: true,
+			Message: "",
+		}
 
 		waitForNext(seqNr, numEntries)
 		logger.Info("rebuilder.main", "namespace", entry.Metadata.Namespace, "name", entry.Metadata.Name)
 
-		user, passwd := secret.GetCredentials(entry.Spec.Base.Authenticated, entry.Spec.Base.SecretName)
-		baseTime := registry.GetLastUpdate(entry.Spec.Base.Host, entry.Spec.Base.Type, entry.Spec.Base.Image, entry.Spec.Base.Tag, user, passwd)
+		user, passwd, err := secret.GetCredentials(entry.Spec.Base.Authenticated, entry.Spec.Base.SecretName)
+		if err != nil {
+			status.SrcOK = false
+			status.Message = err.Error()
+		}
+		baseTime, err := registry.GetLastUpdate(entry.Spec.Base.Host, entry.Spec.Base.Type, entry.Spec.Base.Image, entry.Spec.Base.Tag, user, passwd)
+		if err != nil {
+			status.SrcOK = false
+			status.Message = err.Error()
+		}
 
-		user, passwd = secret.GetCredentials(entry.Spec.Registry.Authenticated, entry.Spec.Registry.SecretName)
-		derivedTime := registry.GetLastUpdate(entry.Spec.Registry.Host, entry.Spec.Registry.Type, entry.Spec.Registry.Image, entry.Spec.Registry.Tag, user, passwd)
+		user, passwd, err = secret.GetCredentials(entry.Spec.Registry.Authenticated, entry.Spec.Registry.SecretName)
+		if err != nil {
+			status.DstOK = false
+			status.Message = err.Error()
+		}
+		derivedTime, err := registry.GetLastUpdate(entry.Spec.Registry.Host, entry.Spec.Registry.Type, entry.Spec.Registry.Image, entry.Spec.Registry.Tag, user, passwd)
+		if err != nil {
+			status.DstOK = false
+			status.Message = err.Error()
+		}
 
 		// if yes spawn a job to rebuild the derived image, or sync the image to the private registry
 		if baseTime.After(derivedTime) {
 			logger.Info("rebuilder.main", "base image", fmt.Sprintf("%s:%s", entry.Spec.Base.Image, entry.Spec.Base.Tag), "derived image", fmt.Sprintf("%s:%s", entry.Spec.Registry.Image, entry.Spec.Registry.Tag), "up-to-date", "NO")
 			err := jobs.RunBuildJob(entry.Spec.Git, entry.Spec.Registry, user, passwd)
 			if err != nil {
-				buildSuccessful = false
+				status.BuildOK = false
+				status.Message = err.Error()
 				logger.Error("rebuilder.main", "job error", err)
 			} else {
 				// execute any after actions, restart deployment f.e.
 				if err = actions.RunActions(entry.Metadata.Namespace, entry.Spec.Actions); err != nil {
-					actionSuccessful = false
+					status.ActionOK = false
+					status.Message = err.Error()
 					logger.Error("rebuilder.main", "actions.RunActions error", err)
 				}
 			}
 		} else {
 			if err := actions.RestartNeeded(entry.Metadata.Namespace, entry.Spec.Actions, derivedTime); err != nil {
-				actionSuccessful = false
+				status.ActionOK = false
+				status.Message = err.Error()
 				logger.Error("rebuilder.main", "actions.RestartNeeded error", err)
 			}
 			logger.Info("rebuilder.main", "derived image", fmt.Sprintf("%s:%s", entry.Spec.Registry.Image, entry.Spec.Registry.Tag), "up-to-date", "OK")
@@ -85,9 +109,7 @@ func buildCycle() {
 		data.Put(entry.Metadata.Namespace,entry.Metadata.Name, 
 			fmt.Sprintf("%s/%s:%s", entry.Spec.Base.Host, entry.Spec.Base.Image, entry.Spec.Base.Tag),
 			fmt.Sprintf("%s/%s:%s", entry.Spec.Registry.Host, entry.Spec.Registry.Image, entry.Spec.Registry.Tag),
-			baseTime.After(derivedTime), buildSuccessful, actionSuccessful)
-		//logger.Info("rebuilder.main", "sleep minutes", int(sleepTime))
-		//time.Sleep(time.Duration(sleepTime) * time.Minute)
+			baseTime.After(derivedTime), status)
 	}
 	waitForEnd()
 	logger.Info("rebuilder.main buildCycle finished")

@@ -30,7 +30,6 @@ import (
         "encoding/json"
         "maps"
 	"errors"
-        //coreV1 "k8s.io/api/core/v1"
         metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"rebuilder/k8s"
 	"rebuilder/logger"
@@ -49,7 +48,12 @@ func getSecretValue(namespace string, name string, key string) ([]byte, error) {
         }
 
 	logger.Info("secret.getSecretValue", "type", secret.Type)
-        return secret.Data[key], nil
+	val, ok := secret.Data[key]
+	if ! ok {
+		logger.Error("secret.getSecretValuekey not found in secret")
+		return []byte{}, errors.New("key not found")
+	}
+        return val, nil
 }
 
 func getCredentialsFromSecret(namespace string, name string) (string, string, error) {
@@ -81,8 +85,9 @@ func getCredentialsFromSecret(namespace string, name string) (string, string, er
 	return "", "", errors.New("not found")
 }
 
-func GetCredentials(authenticated bool, secretname string) (string, string) {
+func GetCredentials(authenticated bool, secretname string) (string, string, error) {
         var namespace, object string
+	var err error
 
         user, passwd := "", ""
         if authenticated {
@@ -94,10 +99,31 @@ func GetCredentials(authenticated bool, secretname string) (string, string) {
                         namespace, object = slice[0], slice[1]
                 default:
                         logger.Error("secret.getCredentials", "malformed secretname", secretname)
-                        return "", ""
+                        return "", "", errors.New("malformed secretname") 
                 }
-                user, passwd, _ = getCredentialsFromSecret(namespace, object)
+                user, passwd, err = getCredentialsFromSecret(namespace, object)
         }
-        return user, passwd
+        return user, passwd, err
 }
 
+func GetSshKeyFromSecret(secretname string, key string) ([]byte, error) {
+        var namespace, name string
+
+	slice := strings.Split(secretname,"/")
+	switch len(slice) {
+	case 1:
+		namespace, name = environ.Env.RebuilderNamespace, slice[0]
+	case 2:
+		namespace, name = slice[0], slice[1]
+	default:
+		logger.Error("secret.GetSshKeyFromSecret", "malformed secretname", secretname)
+		return []byte{}, errors.New("malformed secretname") 
+	}
+	value, err := getSecretValue(namespace, name, key)
+	if err != nil {
+		logger.Error("secret.GetSshKeyFromSecret", "err", err)
+	} else {
+		logger.Info("secret.GetSshKeyFromSecret", "ssh-key truncated", value[:10])
+	}
+	return value, err
+}
