@@ -17,7 +17,7 @@ env:
   # Settings for the builder image
   BUILDER_REPO: "docker.io"
   BUILDER_IMAGE: "gounix/builder"
-  BUILDER_TAG: "1.2.1"
+  BUILDER_TAG: "1.2.2"
   # The namespace where the builder jobs will be spawned
   BUILDER_NAMESPACE: "rebuilder"
   REBUILDER_NAMESPACE: "rebuilder"

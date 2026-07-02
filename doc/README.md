@@ -12,7 +12,7 @@ env:
   # Settings for the builder image
   BUILDER_REPO: "docker.io"
   BUILDER_IMAGE: "gounix/builder"
-  BUILDER_TAG: "1.2.1"
+  BUILDER_TAG: "1.2.2"
   # The namespace where the builder jobs will be spawned
   BUILDER_NAMESPACE: "rebuilder"
   REBUILDER_NAMESPACE: "rebuilder"
@@ -33,7 +33,7 @@ image:
   # This sets the pull policy for images.
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "2.0.0"
+  tag: "2.1.0"
 ```
 To use the prometheus metrics the metrics section has to be adjusted to your environent:
 ```
