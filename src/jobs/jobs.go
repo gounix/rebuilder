@@ -41,6 +41,15 @@ import (
 )
 
 const sleepSeconds = 10
+var   builderErrors = []string{
+	"OK",
+	"Environment not set",
+	"Registry login failed",
+	"Git clone failed",
+	"Git checkout failed",
+	"Git directory not found",
+	"Make failed",
+}
 
 // createJobSpec returns a job object that can be applied to cluster
 // It'll return the yaml example to k8s job object
@@ -132,6 +141,27 @@ func createJobSpec(name string, git resources.GitT, reg resources.RegistryT, use
 	}
 }
 
+func getPodExitCode(clientset *kubernetes.Clientset, jobName string) (int32, error) {
+	pods, err := clientset.CoreV1().Pods(environ.Env.BuilderNamespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		logger.Error("jobs.getPodExitCode clientset.CoreV1", "err", err)
+		return 0, err
+	}
+	for _, pod := range pods.Items {
+		for _, owner := range pod.OwnerReferences {
+			if owner.Kind == "Job" && owner.Name == jobName {
+				ptr := pod.Status.ContainerStatuses[0].State.Terminated
+				exitCode := (*ptr).ExitCode
+				logger.Info("jobs.getPodExitCode", "code", exitCode)
+				return exitCode, nil
+			}
+		}
+
+	}
+	logger.Error("jobs.getPodExitCode", "pod", "not found")
+	return 0, errors.New("pod not found")
+}
+
 func waitForJob(clientset *kubernetes.Clientset, jobName string) error {
 
 	for true {
@@ -139,14 +169,17 @@ func waitForJob(clientset *kubernetes.Clientset, jobName string) error {
 		if err != nil {
 			return err
 		}
-		//logger.Info("jobs.waitForJob", "status", job.Status)
 		if job.Status.Succeeded > 0 {
 			logger.Info("jobs.waitForJob succeeded", "job", jobName)
 			return nil // Job ran successfully
 		}
 		if job.Status.Failed > 0 {
 			logger.Error("jobs.waitForJob failed", "job", jobName)
-			return errors.New("Job failed")
+			exitCode, err := getPodExitCode(clientset, jobName)
+			if err != nil {
+				return err
+			}
+			return errors.New(builderErrors[exitCode])
 		}
 		if job.Status.Active == 0 {
 			logger.Info("jobs.waitForJob not started", "job", jobName)
