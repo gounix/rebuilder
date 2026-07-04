@@ -1,5 +1,5 @@
 IMAGE=rebuilder
-IMAGE_VERSION=2.2.0
+IMAGE_VERSION=2.2.1
 GOVERSION=1.26
 
 .PHONY: dockerhub 

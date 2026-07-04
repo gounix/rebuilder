@@ -151,9 +151,13 @@ func getPodExitCode(clientset *kubernetes.Clientset, jobName string) (int32, err
 		for _, owner := range pod.OwnerReferences {
 			if owner.Kind == "Job" && owner.Name == jobName {
 				ptr := pod.Status.ContainerStatuses[0].State.Terminated
-				exitCode := (*ptr).ExitCode
-				logger.Info("jobs.getPodExitCode", "code", exitCode)
-				return exitCode, nil
+				if ptr != nil {
+					exitCode := (*ptr).ExitCode
+					logger.Info("jobs.getPodExitCode", "code", exitCode)
+					return exitCode, nil
+				} else {
+					return 0, errors.New("Cannot get exit code of pod")
+				}
 			}
 		}
 
