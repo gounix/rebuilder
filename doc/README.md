@@ -33,7 +33,7 @@ image:
   # This sets the pull policy for images.
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "2.2.0"
+  tag: "2.2.1"
 ```
 To use the prometheus metrics the metrics section has to be adjusted to your environent:
 ```
@@ -146,7 +146,7 @@ If you need other software you can derive a custom image from the builder image 
 When migrating to 1.2.0 the new helm chart should be used since it includes a change in the CRD. The builder image needs to be at version 1.2.0.
 When migrating to 1.4.0 the new helm chart should be used since a new environment variable is present.
 When migrating to 2.0.0 the new helm chart should be used since the cronjob is replaced by a replicaset.
-The 2.2.0 version requires builder version 1.2.2
+The 2.2.0 version and up require builder version 1.2.2
 
 # Change history
 
@@ -158,3 +158,4 @@ The 2.2.0 version requires builder version 1.2.2
 * 2.0.0 6/29/2026 Replaced cronjob by replicaset, added prometheus metrics, added a build window
 * 2.1.0 7/1/2026 Better error handling, support for gcr.io
 * 2.2.0 7/3/2026 Propagated errors from the builder job to the main deployment
+* 2.2.1 7/4/2026 Fixed segment violation when pod is deleted
