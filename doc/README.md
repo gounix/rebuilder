@@ -129,7 +129,7 @@ You can also use your favourite way(like vault for example) to create secrets in
 # Grafana dashboard
 
 The grafana dashboard gives insight in the status of your rebuilds.
-![Grafana](https://raw.githubusercontent.com/ronvisser/rebuilder/main/doc/grafana.jpg)
+![Grafana](https://github.com/gounix/rebuilder/blob/main/doc/grafana.jpg)
 Get the grafana dashboard from [github](https://github.com/gounix/rebuilder/tree/main/grafana)
 
 # Notes about pullPolicy
