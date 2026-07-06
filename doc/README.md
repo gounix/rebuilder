@@ -126,6 +126,11 @@ kubectl create secret docker-registry regcred --docker-server=ghcr.io --docker-u
 ```
 You can also use your favourite way(like vault for example) to create secrets in a secure way.
 
+# Grafana dashboard
+
+The grafana dashboard gives insight in the status of your rebuilds.
+Get the grafana dashboard from [github](https://github.com/gounix/rebuilder/tree/main/grafana)
+
 # Notes about pullPolicy
 
 The rebuilder deployment does not change version numbers of the images it manages, it just rebuild existing images. To make sure kubernetes will pull the new image the pullPolicy should be set to Always on all deployments that use rebuild.
