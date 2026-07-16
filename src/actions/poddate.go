@@ -57,10 +57,14 @@ func listPods(clientset *kubernetes.Clientset, namespace string) []RestartPod {
 			list_entry.Kind = owner[0].Kind
 			list_entry.Name = owner[0].Name
 			if list_entry.Kind == "ReplicaSet" || list_entry.Kind == "Deployment" || list_entry.Kind == "DaemonSet" || list_entry.Kind == "StatefulSet" {
-				logger.Info("actions.listPods", "kind", list_entry.Kind, "name", list_entry.Name, "startedAt", status[0].State.Running.StartedAt)
-				//fmt.Printf("actions.listPods list_entry.StartedAt %s\n", status)
-				list_entry.StartedAt = status[0].State.Running.StartedAt
-				list = append(list, list_entry)
+				if running :=  status[0].State.Running; running != nil {
+					logger.Info("actions.listPods", "kind", list_entry.Kind, "name", list_entry.Name, "startedAt", status[0].State.Running.StartedAt)
+					//list_entry.StartedAt = status[0].State.Running.StartedAt
+					list_entry.StartedAt = running.StartedAt
+					list = append(list, list_entry)
+				} else {
+					logger.Info("actions.listPods ignore not running", "kind", list_entry.Kind, "name", list_entry.Name)
+				}
 			}
 		}
         }

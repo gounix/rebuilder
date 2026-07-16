@@ -42,7 +42,8 @@ const restartAnnotationPattern = `{
 				"template": {
 					"metadata": {
 						"annotations": {
-							"kubectl.kubernetes.io/restartedAt": "%s"
+							"kubernetes.io/restartedAt": "%s",
+							"kubernetes.io/change-cause": "restarted by Rebuilder"
 						}
 					}
 				}

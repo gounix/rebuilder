@@ -93,7 +93,7 @@ func waitForNext(seqNr int, numBuilds int) {
 	startTime := cycleStart.Add(time.Duration(offset)) // time at which the nth run should start
 	sleepTime := startTime.Sub(time.Now())
 
-	logger.Info("main.waitForNext", "seqNr", seqNr, "sleep", sleepTime)
+	logger.Info("main.waitForNext", "seqNr", seqNr, "total", numBuilds, "sleep", sleepTime)
 	time.Sleep(sleepTime)
 }
 

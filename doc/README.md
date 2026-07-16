@@ -33,7 +33,7 @@ image:
   # This sets the pull policy for images.
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "2.2.1"
+  tag: "2.2.2"
 ```
 To use the prometheus metrics the metrics section has to be adjusted to your environent:
 ```
@@ -165,3 +165,4 @@ The 2.2.0 version and up require builder version 1.2.2
 * 2.1.0 7/1/2026 Better error handling, support for gcr.io
 * 2.2.0 7/3/2026 Propagated errors from the builder job to the main deployment
 * 2.2.1 7/4/2026 Fixed segment violation when pod is deleted
+* 2.2.2 16/4/2026 Fixed segment violation when pod is not running
